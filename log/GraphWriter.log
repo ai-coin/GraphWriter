@@ -1,0 +1,45 @@
+[GraphWriterTest] connecting with an existing GraphWriter to shut it down...
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   received exception: Connection refused (Connection refused)
+[GraphWriterTest]   no existing GraphWriter server to shut down
+[GraphWriter] issuing a graph request to see if the graph-writing server is running...
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriterTest] graphLabeledTree2
+[GraphWriterTest] asserting that the graph-writing server is not running...
+[GraphWriter] issuing a graph request to see if the graph-writing server is running...
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter] issuing a graph request to see if the graph-writing server is running...
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   starting graph-writing server
+[GraphWriter] shell cmd: cd /home/reed/GraphWriter-1.0 ; ./run-graph-writer.sh > log/run-graph-writer.log
+[GraphWriter] waiting 10 seconds for the graph server to start...
+[GraphWriterTest] asserting that the graph-writing server is running...
+[GraphWriter] issuing a graph request to see if the graph-writing server is running...
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   labeledTree: ignore
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   labeledTree: [test_1/1]
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   labeledTree: [test_2/1]
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   labeledTree: [test_3/1]
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   labeledTree: [test_4/1]
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   labeledTree: [test_5/1]
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   labeledTree: [test_6/1]
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   labeledTree: [test_7/1]
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   labeledTree: [test_8/1]
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   labeledTree: [test_9/1]
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   labeledTree: [test_10/1]
+[GraphWriterTest] sleeping for 10 seconds while graph images are created by spawned processes...
+[GraphWriter] issuing a graph request to quit...
+[GraphWriter]   connecting to localhost graph server on port: 14446
+[GraphWriter]   labeledTree: quit
+[GraphWriter] issuing a graph request to see if the graph-writing server is running...
+[GraphWriter]   connecting to localhost graph server on port: 14446

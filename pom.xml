@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.texai</groupId>
+  <artifactId>GraphWriter</artifactId>
+  <version>1.0</version>
+  <name>GraphWriter</name>
+  <url>http://texai.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <!--
+    <dependency>
+      <groupId>org.texai</groupId>
+      <artifactId>Utilities</artifactId>
+      <version>1.0</version>
+    </dependency>
+  -->
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.7</version>
+    </dependency>
+
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.17</version>
+      <!-- exclude unused Sun jars which otherwise have to be manually downloaded into the local Maven repository -->
+      <exclusions>
+        <exclusion>
+          <groupId>javax.mail</groupId>
+          <artifactId>mail</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>javax.jms</groupId>
+          <artifactId>jms</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.sun.jdmk</groupId>
+          <artifactId>jmxtools</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.sun.jmx</groupId>
+          <artifactId>jmxri</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>com.lmax</groupId>
+      <artifactId>disruptor</artifactId>
+      <version>3.3.6</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <showDeprecation>true</showDeprecation>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9.1</version>
+        <configuration>
+          <source>1.8</source>
+          <encoding>utf8</encoding>
+          <quiet>false</quiet>
+          <links>
+            <link>http://java.sun.com/javase/8/docs/api/</link>
+          </links>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>create-executable-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptors>
+                <descriptor>src/main/assembly/all-dependencies.xml</descriptor>
+              </descriptors>
+              <archive>
+                <manifest>
+                  <mainClass>org.texai.graphwriter.GraphWriter</mainClass>
+                </manifest>
+              </archive>
+              <archiverConfig>
+                <duplicateBehavior>skip</duplicateBehavior>
+              </archiverConfig>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.8</version>
+        <executions>
+          <execution>
+            <id>install-to-production</id>
+            <phase>install</phase>
+            <configuration>
+              <target>
+                <exec dir="scripts" executable="sh" spawn="false">
+                  <arg value="install.sh"/>
+                </exec>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.20.1</version>
+        <configuration>
+          <!-- full stack trace on exception -->
+          <trimStackTrace>false</trimStackTrace>
+          <!-- run each unit test in a separate forked JVM to avoid inconsistences due to static class state -->
+          <forkCount>1</forkCount>
+          <reuseForks>false</reuseForks>
+          <!-- <argLine>-Dorg.texai.tempRepositories=${env.REPOSITORIES_TMPFS} -Djava.security.policy==file:///${basedir}/../Security/security/texai.policy -Djava.security.debug=all</argLine> -->
+
+          <!--  <argLine>-ea -Dorg.texai.tempRepositories=${env.REPOSITORIES_TMPFS} -Djava.security.policy==file:///${basedir}/../Security/security/texai.policy </argLine>  -->
+          <argLine>-ea -Dlog4j2.debug=1 -Djavax.net.debug=all</argLine>
+
+          <!--   <argLine>-ea -Djava.security.debug=all</argLine>  -->
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+</project>
