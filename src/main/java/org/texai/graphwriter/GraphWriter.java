@@ -76,13 +76,11 @@ public class GraphWriter {
    * Constructs a new GraphWriter instance.
    */
   public GraphWriter() {
-    LOGGER.info("setting thread name");
-    Thread.currentThread().setName("GraphWritercd ");
-    LOGGER.info("constructing the ServerSocket instance...");
+    Thread.currentThread().setName("GraphWriter");
     try {
       serverSocket = new ServerSocket();
-      LOGGER.info("  serverSocket: " + serverSocket);
     } catch (Throwable ex) {
+      // in OpenJDK 11, the ServerSocket has a missing field error, so regressed back to OpenJDK 8
       LOGGER.error("Exception when creating the server socket: " + ex.getMessage());
       LOGGER.error("Exception class: " + ex.getClass().getName() + ", " + ex);
       ex.printStackTrace();
@@ -239,11 +237,9 @@ public class GraphWriter {
       // listen on the socket
       try {
         try {
-          LOGGER.info("  creating socketAddress...");
           final SocketAddress socketAddress = new InetSocketAddress(
                   InetAddress.getLoopbackAddress(), // ip,
                   LISTENING_PORT);
-          LOGGER.info("  binding socket to " + socketAddress + "...");
           graphWriter.serverSocket.bind(socketAddress);
         } catch (IOException ex) {
           LOGGER.error("ServerSocket exception: " + ex.getMessage());
@@ -254,9 +250,8 @@ public class GraphWriter {
 
         // handle client graphing requests
         while (true) {
-          LOGGER.info("waiting on serverSocket accept...");
+          LOGGER.debug("waiting on serverSocket accept...");
           final Socket clientSocket = graphWriter.serverSocket.accept();
-          LOGGER.info("clientSocket " + clientSocket);
           if (graphWriter.isQuit.get()) {
             return;
           } else if (LOGGER.isDebugEnabled()) {
@@ -434,7 +429,9 @@ public class GraphWriter {
    * @return whether the graph-writing server is running
    */
   public static boolean isGraphServerRunning() {
-    LOGGER.info("issuing a graph request to see if the graph-writing server is running...");
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("issuing a graph request to see if the graph-writing server is running...");
+    }
     return issueGraphRequest("ignore", "ignore");
   }
 
@@ -454,9 +451,11 @@ public class GraphWriter {
       final StringBuilder stringBuilder = new StringBuilder();
       stringBuilder.append("cd ");
       stringBuilder.append(GRAPH_WRITER_PATH);
-      stringBuilder.append(" ; ./run-graph-writer.sh > log/run-graph-writer.log");
+      stringBuilder.append(" ; ./run-graph-writer.sh");
       cmdArray[2] = stringBuilder.toString();
-      LOGGER.info("shell cmd: " + cmdArray[2]);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("shell cmd: " + cmdArray[2]);
+      }
       try {
         Runtime.getRuntime().exec(cmdArray);
       } catch (IOException ex1) {
@@ -490,7 +489,9 @@ public class GraphWriter {
     assert !labeledTree.isEmpty() : "labeledTree must not be empty";
 
     try {
-      LOGGER.info("  connecting to localhost graph server on port: " + GraphWriter.LISTENING_PORT);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("  connecting to localhost graph server on port: " + GraphWriter.LISTENING_PORT);
+      }
       final Socket socket = new Socket("127.0.0.1", GraphWriter.LISTENING_PORT);
       if (labeledTree.length() > 30) {
         LOGGER.info("  labeledTree: " + labeledTree.substring(0, 30) + " ...");
@@ -515,7 +516,9 @@ public class GraphWriter {
    * Conveniently issues a shutdown request from a client.
    */
   public static void shutDown() {
-    LOGGER.info("issuing a graph request to quit...");
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("issuing a graph request to quit...");
+    }
     issueGraphRequest("quit", "quit");
   }
 
