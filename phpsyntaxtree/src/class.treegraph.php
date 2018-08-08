@@ -378,7 +378,7 @@ class CTreeGraph
                         // leaf contains more than one word, we draw a
                         // triangle instead.
 
-                        $words = split( ' ', $e_arr[$j]->content );
+                        $words = explode( ' ', $e_arr[$j]->content );
 
                         if (   $this->triangles == TRUE
                             && ETYPE_LEAF       == $e_arr[ $j ]->type
