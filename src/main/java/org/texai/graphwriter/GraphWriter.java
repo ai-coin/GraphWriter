@@ -461,9 +461,9 @@ public class GraphWriter {
       } catch (IOException ex1) {
         throw new RuntimeException(ex1);
       }
-      LOGGER.info("waiting 10 seconds for the graph server to start...");
+      LOGGER.info("waiting 5 seconds for the graph server to start...");
       try {
-        Thread.sleep(10_000);
+        Thread.sleep(5_000);
       } catch (InterruptedException ex2) {
       }
 
