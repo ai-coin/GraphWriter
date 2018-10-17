@@ -67,8 +67,8 @@
         <version>3.1</version>
         <configuration>
           <showDeprecation>true</showDeprecation>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>10</source>
+          <target>10</target>
         </configuration>
       </plugin>
 
@@ -77,7 +77,7 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.9.1</version>
         <configuration>
-          <source>1.8</source>
+          <source>10</source>
           <encoding>utf8</encoding>
           <quiet>false</quiet>
           <links>
@@ -136,7 +136,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.20.1</version>
+        <version>2.22.0</version>
         <configuration>
           <!-- full stack trace on exception -->
           <trimStackTrace>false</trimStackTrace>
@@ -154,4 +154,12 @@
 
     </plugins>
   </build>
+  
+  <distributionManagement>
+    <repository>
+      <!-- Nexus artifact server must be the same as specified in ~/.m2/settings.xml -->
+      <id>nexus</id>
+      <url>http://52.8.248.253:8081/nexus/content/repositories/releases/</url>
+    </repository>
+  </distributionManagement>
 </project>
