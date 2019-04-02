@@ -36,14 +36,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.log4j.Logger;
-//import org.texai.util.StreamConsumer;
-//import org.texai.util.StringUtils;
-//import org.texai.util.TexaiException;
 
 /**
  * A singleton instance of this class listens on a socket for graph-writing requests, queues them, and serially emits
@@ -51,6 +46,7 @@ import org.apache.log4j.Logger;
  *
  * @author reed
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class GraphWriter {
 
   // the logger, which is configured via log4j.properties to log to the file GraphWriter.log
@@ -92,9 +88,6 @@ public class GraphWriter {
    * Initializes this application.
    */
   public void initialialization() {
-    // Executor that will be used to construct new threads for consumers
-    final Executor executor = Executors.newCachedThreadPool();
-
     // listens for graph requests on the server socket, and puts them into the ring buffer
     final GraphRequestFactory graphRequestFactory = new GraphRequestFactory();
 
@@ -112,7 +105,7 @@ public class GraphWriter {
 
     // start server thread
     serverThread = new Thread(new RequestServer(this));
-    serverThread.setName("server thread");
+    serverThread.setName("GraphWriter server thread");
     serverThread.start();
   }
 
@@ -280,7 +273,7 @@ public class GraphWriter {
   }
 
   /**
-   * Provides a distruptor event translator that populates a graph request slot in the ring buffer with a received graph
+   * Provides a disruptor event translator that populates a graph request slot in the ring buffer with a received graph
    * request.
    */
   static class GraphRequestEventTranslatorOneArg implements EventTranslatorOneArg<GraphRequest, GraphRequest> {
@@ -516,8 +509,10 @@ public class GraphWriter {
    * Conveniently issues a shutdown request from a client.
    */
   public static void shutDown() {
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("issuing a graph request to quit...");
+    LOGGER.info("quitting - waiting 5 seconds for the graph server to finish...");
+    try {
+      Thread.sleep(5_000);
+    } catch (InterruptedException ex2) {
     }
     issueGraphRequest("quit", "quit");
   }
