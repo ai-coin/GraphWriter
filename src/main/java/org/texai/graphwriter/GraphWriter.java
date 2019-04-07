@@ -433,9 +433,9 @@ public class GraphWriter {
    */
   public static void ensureRunningGraphServer() {
     if (isGraphServerRunning()) {
-      LOGGER.info("  graph-writing server is already running");
+      LOGGER.info("graph-writing server is already running");
     } else {
-      LOGGER.info("  starting graph-writing server");
+      LOGGER.info("starting graph-writing server");
       String[] cmdArray = {
         "sh",
         "-c",
