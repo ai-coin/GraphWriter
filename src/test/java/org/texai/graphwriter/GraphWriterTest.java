@@ -24,10 +24,10 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -45,6 +45,7 @@ public class GraphWriterTest {
   public static void setUpClass() throws Exception {
     // shut down the GraphWriter server if it is already running
 
+    Logger.getLogger(GraphWriter.class).setLevel(Level.DEBUG);
     LOGGER.info("connecting with an existing GraphWriter to shut it down...");
     final boolean isOK = GraphWriter.issueGraphRequest("quit", "quit");
     if (isOK) {
@@ -52,6 +53,8 @@ public class GraphWriterTest {
     } else {
       LOGGER.info("  no existing GraphWriter server to shut down");
     }
+    LOGGER.info("waiting 5 seconds for possible running GraphWriter to shutdown...");
+    Thread.sleep(5_000);
     assertFalse(GraphWriter.isGraphServerRunning());
   }
 

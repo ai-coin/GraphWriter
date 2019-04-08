@@ -2,6 +2,7 @@
 [GraphWriter]   connecting to localhost graph server on port: 14446
 [GraphWriter]   received exception: Connection refused (Connection refused)
 [GraphWriterTest]   no existing GraphWriter server to shut down
+[GraphWriterTest] waiting 5 seconds for possible running GraphWriter to shutdown...
 [GraphWriter] issuing a graph request to see if the graph-writing server is running...
 [GraphWriter]   connecting to localhost graph server on port: 14446
 [GraphWriterTest] graphLabeledTree2

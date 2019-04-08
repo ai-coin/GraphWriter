@@ -36,6 +36,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.log4j.Logger;
@@ -67,6 +69,8 @@ public class GraphWriter {
   private ServerSocket serverSocket = null;
   // the disruptor lock-free queue
   private Disruptor<GraphRequest> disruptor;
+  // the graphing request thread pool
+  private ExecutorService executor = Executors.newCachedThreadPool();
 
   /**
    * Constructs a new GraphWriter instance.
@@ -75,11 +79,10 @@ public class GraphWriter {
     Thread.currentThread().setName("GraphWriter");
     try {
       serverSocket = new ServerSocket();
-    } catch (Throwable ex) {
+    } catch (IOException ex) {
       // in OpenJDK 11, the ServerSocket has a missing field error, so regressed back to OpenJDK 8
       LOGGER.error("Exception when creating the server socket: " + ex.getMessage());
       LOGGER.error("Exception class: " + ex.getClass().getName() + ", " + ex);
-      ex.printStackTrace();
       System.exit(1);
     }
   }
@@ -88,6 +91,8 @@ public class GraphWriter {
    * Initializes this application.
    */
   public void initialialization() {
+
+    LOGGER.debug("is debug logging...");
     // listens for graph requests on the server socket, and puts them into the ring buffer
     final GraphRequestFactory graphRequestFactory = new GraphRequestFactory();
 
@@ -188,7 +193,7 @@ public class GraphWriter {
    * Finalizes this application and releases its resources.
    */
   public void finalization() {
-    LOGGER.info("finishing GraphWriter");
+    LOGGER.info("finishing GraphWriter...");
     isQuit.set(true);
     if (serverThread != null) {
       serverThread.interrupt();
@@ -197,6 +202,8 @@ public class GraphWriter {
       serverSocket.close();
     } catch (IOException ex) {
     }
+    executor.shutdown();
+    LOGGER.info("GraphWriter shutdown.");
     System.exit(0);
   }
 
@@ -207,8 +214,6 @@ public class GraphWriter {
 
     // the graph writer
     private final GraphWriter graphWriter;
-    // the disruptor event translator (slot populator)
-    private final EventTranslatorOneArg graphRequestEventTranslatorOneArg = new GraphRequestEventTranslatorOneArg();
 
     /**
      * Constructs a new RequestServer instance.
@@ -246,21 +251,13 @@ public class GraphWriter {
           LOGGER.debug("waiting on serverSocket accept...");
           final Socket clientSocket = graphWriter.serverSocket.accept();
           if (graphWriter.isQuit.get()) {
+            LOGGER.debug("quitting the socket server thread");
             return;
           } else if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("accepted connection");
           }
-          final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-          final GraphRequest graphRequest = GraphRequest.makeGraphRequest(bufferedReader);
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("queuing: " + graphRequest);
-          }
-          // put the request into the ring buffer
-
-          graphWriter.ringBuffer.publishEvent(
-                  graphRequestEventTranslatorOneArg,
-                  graphRequest); // arg0, the request to be moved field by field into the next ring buffer slot
-
+          final RequestHandler requestHandler = new RequestHandler(graphWriter, clientSocket);
+          graphWriter.executor.execute(requestHandler);
         }
       } catch (SocketException ex) {
         if (!graphWriter.isQuit.get()) {
@@ -270,6 +267,59 @@ public class GraphWriter {
         throw new RuntimeException(ex);
       }
     }
+  }
+
+  /**
+   * Provides a runnable to handle a graph request on the server socket.
+   */
+  static class RequestHandler implements Runnable {
+
+    // the graph writer
+    private final GraphWriter graphWriter;
+
+    // the disruptor event translator (slot populator)
+    private final EventTranslatorOneArg graphRequestEventTranslatorOneArg = new GraphRequestEventTranslatorOneArg();
+
+    // the connection to the client
+    final Socket clientSocket;
+
+    /**
+     * Constructs a new RequestHandler instance.
+     *
+     * @param graphWriter the graph writer
+     */
+    RequestHandler(
+            final GraphWriter graphWriter,
+            final Socket clientSocket) {
+      //Preconditions
+      assert graphWriter != null : "graphWriter must not be null";
+
+      this.graphWriter = graphWriter;
+      this.clientSocket = clientSocket;
+    }
+
+    /**
+     * Gets the graph request and puts into the ring buffer.
+     */
+    @Override
+    public void run() {
+      final BufferedReader bufferedReader;
+      try {
+        bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+      } catch (IOException ex) {
+          throw new RuntimeException(ex);
+      }
+      final GraphRequest graphRequest = GraphRequest.makeGraphRequest(bufferedReader);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("queuing: " + graphRequest);
+      }
+      // put the request into the ring buffer
+
+      graphWriter.ringBuffer.publishEvent(
+              graphRequestEventTranslatorOneArg,
+              graphRequest); // arg0, the request to be moved field by field into the next ring buffer slot
+    }
+
   }
 
   /**
