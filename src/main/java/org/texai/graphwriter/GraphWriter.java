@@ -76,11 +76,9 @@ public class GraphWriter {
    * Constructs a new GraphWriter instance.
    */
   public GraphWriter() {
-    Thread.currentThread().setName("GraphWriter");
     try {
       serverSocket = new ServerSocket();
     } catch (IOException ex) {
-      // in OpenJDK 11, the ServerSocket has a missing field error, so regressed back to OpenJDK 8
       LOGGER.error("Exception when creating the server socket: " + ex.getMessage());
       LOGGER.error("Exception class: " + ex.getClass().getName() + ", " + ex);
       System.exit(1);
@@ -92,6 +90,7 @@ public class GraphWriter {
    */
   public void initialialization() {
 
+    Thread.currentThread().setName("main");
     LOGGER.debug("is debug logging...");
     // listens for graph requests on the server socket, and puts them into the ring buffer
     final GraphRequestFactory graphRequestFactory = new GraphRequestFactory();
@@ -99,7 +98,7 @@ public class GraphWriter {
     // the lock-free ring buffer
     disruptor = new Disruptor(
             graphRequestFactory, // eventFactory,
-            1024, // ringBufferSize
+            2048, // ringBufferSize
             (ThreadFactory) DaemonThreadFactory.INSTANCE); // threadFactory);
 
     // the handler gets a gueued graph request from the ring buffer and executes a shell script to create the graph image
@@ -110,7 +109,7 @@ public class GraphWriter {
 
     // start server thread
     serverThread = new Thread(new RequestServer(this));
-    serverThread.setName("GraphWriter server thread");
+    serverThread.setName("server");
     serverThread.start();
   }
 
@@ -168,6 +167,7 @@ public class GraphWriter {
       assert graphRequest != null : "event must not be null";
       assert sequence >= 0 : "sequence must not be negative";
 
+      Thread.currentThread().setName("event-handler");
       if (graphWriter.isQuit.get()) {
         return;
       }
@@ -248,17 +248,14 @@ public class GraphWriter {
 
         // handle client graphing requests
         while (true) {
-          LOGGER.debug("waiting on serverSocket accept...");
           final Socket clientSocket = graphWriter.serverSocket.accept();
           if (graphWriter.isQuit.get()) {
-            LOGGER.debug("quitting the socket server thread");
             return;
-          } else if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("accepted connection");
           }
           final RequestHandler requestHandler = new RequestHandler(graphWriter, clientSocket);
           graphWriter.executor.execute(requestHandler);
         }
+
       } catch (SocketException ex) {
         if (!graphWriter.isQuit.get()) {
           throw new RuntimeException(ex);

@@ -1,46 +1,46 @@
-[GraphWriterTest] connecting with an existing GraphWriter to shut it down...
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter]   received exception: Connection refused (Connection refused)
-[GraphWriterTest]   no existing GraphWriter server to shut down
-[GraphWriterTest] waiting 5 seconds for possible running GraphWriter to shutdown...
-[GraphWriter] issuing a graph request to see if the graph-writing server is running...
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriterTest] graphLabeledTree2
-[GraphWriterTest] asserting that the graph-writing server is not running...
-[GraphWriter] issuing a graph request to see if the graph-writing server is running...
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter] issuing a graph request to see if the graph-writing server is running...
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter] starting graph-writing server
-[GraphWriter] shell cmd: cd /home/reed/GraphWriter-1.0 ; ./run-graph-writer.sh
-[GraphWriter] waiting 5 seconds for the graph server to start...
-[GraphWriterTest] asserting that the graph-writing server is running...
-[GraphWriter] issuing a graph request to see if the graph-writing server is running...
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter]   labeledTree: ignore
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter]   labeledTree: [test_1/1]
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter]   labeledTree: [test_2/1]
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter]   labeledTree: [test_3/1]
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter]   labeledTree: [test_4/1]
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter]   labeledTree: [test_5/1]
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter]   labeledTree: [test_6/1]
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter]   labeledTree: [test_7/1]
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter]   labeledTree: [test_8/1]
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter]   labeledTree: [test_9/1]
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter]   labeledTree: [test_10/1]
-[GraphWriterTest] sleeping for 10 seconds while graph images are created by spawned processes...
-[GraphWriter] quitting - waiting 5 seconds for the graph server to finish...
-[GraphWriter]   connecting to localhost graph server on port: 14446
-[GraphWriter]   labeledTree: quit
-[GraphWriter] issuing a graph request to see if the graph-writing server is running...
-[GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriterTest] connecting with an existing GraphWriter to shut it down...
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter]   received exception: Connection refused (Connection refused)
+[main GraphWriterTest]   no existing GraphWriter server to shut down
+[main GraphWriterTest] waiting 5 seconds for possible running GraphWriter to shutdown...
+[main GraphWriter] issuing a graph request to see if the graph-writing server is running...
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriterTest] graphLabeledTree2
+[main GraphWriterTest] asserting that the graph-writing server is not running...
+[main GraphWriter] issuing a graph request to see if the graph-writing server is running...
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter] issuing a graph request to see if the graph-writing server is running...
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter] starting graph-writing server
+[main GraphWriter] shell cmd: cd /home/reed/GraphWriter-1.0 ; ./run-graph-writer.sh
+[main GraphWriter] waiting 5 seconds for the graph server to start...
+[main GraphWriterTest] asserting that the graph-writing server is running...
+[main GraphWriter] issuing a graph request to see if the graph-writing server is running...
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter]   labeledTree: ignore
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter]   labeledTree: [test_1/1]
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter]   labeledTree: [test_2/1]
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter]   labeledTree: [test_3/1]
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter]   labeledTree: [test_4/1]
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter]   labeledTree: [test_5/1]
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter]   labeledTree: [test_6/1]
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter]   labeledTree: [test_7/1]
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter]   labeledTree: [test_8/1]
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter]   labeledTree: [test_9/1]
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter]   labeledTree: [test_10/1]
+[main GraphWriterTest] sleeping for 10 seconds while graph images are created by spawned processes...
+[main GraphWriter] quitting - waiting 5 seconds for the graph server to finish...
+[main GraphWriter]   connecting to localhost graph server on port: 14446
+[main GraphWriter]   labeledTree: quit
+[main GraphWriter] issuing a graph request to see if the graph-writing server is running...
+[main GraphWriter]   connecting to localhost graph server on port: 14446
