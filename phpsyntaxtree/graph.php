@@ -10,12 +10,12 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 2 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -31,10 +31,10 @@ $data=$argv[2]; //'parse data
 
 $color     = 1;
 $triangles = FALSE;
-$antialias = 0;
+$antialias = 1;   // smooth lines
 $autosub   = 0;
 $font      = 'Vera.ttf';
-$fontsize  = 8;
+$fontsize  = 14;  // readable font, and readable subscript font
 
 // Validate the phrase and draw the tree
 
@@ -43,16 +43,16 @@ $sp = new CStringParser( $data );
 if ($sp->Validate() )
 {
     // If all is well, go ahead and draw the graph ...
-    
+
     $sp->Parse();
-    
+
    if ( $autosub )
         $sp->AutoSubscript();
-    
+
     $elist = $sp->GetElementList();
-    
+
     // Draw the graph into a file
-    
+
     $fontpath = dirname( $_SERVER['SCRIPT_FILENAME'] ) . '/ttf/';
 
     $graph = new CTreegraph( $elist

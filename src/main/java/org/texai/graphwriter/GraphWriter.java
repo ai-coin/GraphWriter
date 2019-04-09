@@ -556,9 +556,9 @@ public class GraphWriter {
    * Conveniently issues a shutdown request from a client.
    */
   public static void shutDown() {
-    LOGGER.info("quitting - waiting 5 seconds for the graph server to finish...");
+    LOGGER.warn("quitting - waiting 10 seconds for the graph server to finish...");
     try {
-      Thread.sleep(5_000);
+      Thread.sleep(10_000);
     } catch (InterruptedException ex2) {
     }
     issueGraphRequest("quit", "quit");
