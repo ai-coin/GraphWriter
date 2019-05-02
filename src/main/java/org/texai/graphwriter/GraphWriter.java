@@ -45,6 +45,8 @@ import org.apache.log4j.Logger;
 /**
  * A singleton instance of this class listens on a socket for graph-writing requests, queues them, and serially emits
  * graphs.
+ * 
+ * phpsyntaxtree supports svg images which can contain embedded hyperlinks, as a future enhancement.
  *
  * @author reed
  */
