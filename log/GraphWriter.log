@@ -1,7 +1,7 @@
 [main GraphWriterTest] connecting with an existing GraphWriter to shut it down...
 [main GraphWriter]   connecting to localhost graph server on port: 14446
-[main GraphWriter]   labeledTree: quit
-[main GraphWriterTest]   existing GraphWriter server shut down
+[main GraphWriter]   received exception: Connection refused
+[main GraphWriterTest]   no existing GraphWriter server to shut down
 [main GraphWriterTest] waiting 5 seconds for possible running GraphWriter to shutdown...
 [main GraphWriter] issuing a graph request to see if the graph-writing server is running...
 [main GraphWriter]   connecting to localhost graph server on port: 14446
