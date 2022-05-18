@@ -15,6 +15,9 @@
   </dependencySets>
   <files>
     <file>
+      <source>classpathFile</source>
+    </file>
+    <file>
       <source>src/main/resources/log4j.properties</source>
     </file>
     <file>
