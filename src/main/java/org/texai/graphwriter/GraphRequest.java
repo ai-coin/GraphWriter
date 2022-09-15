@@ -13,20 +13,25 @@ package org.texai.graphwriter;
 import java.io.BufferedReader;
 import java.io.IOException;
 
-/**  Provides a graph request.
+/**
+ * Provides a graph request.
  *
  * @author reed
  */
 public class GraphRequest {
 
-  /** the serial version UID */
+  // the serial version UID
   private static final long serialVersionUID = 1L;
-  /** the graph file name */
+
+  // the graph file name
   private String fileName;
-  /** the labeled tree that specifies the graph */
+
+  // the labeled tree that specifies the graph
   private String labeledTree;
 
-  /** Constructs a new GraphRequest instance.
+  /**
+   * Constructs a new GraphRequest instance.
+   *
    * @param fileName the graph file name
    * @param labeledTree the labeled tree that specifies the graph
    */
@@ -43,7 +48,8 @@ public class GraphRequest {
     this.labeledTree = labeledTree;
   }
 
-  /** Makes a GraphRequest instance from the contents of the given buffered reader, as received from the client.
+  /**
+   * Makes a GraphRequest instance from the contents of the given buffered reader, as received from the client.
    *
    * @param bufferedReader the given buffered reader
    * @return a GraphRequest instance
@@ -54,15 +60,19 @@ public class GraphRequest {
 
     final StringBuilder stringBuilder = new StringBuilder();
     try {
-      // parse zero-terminated file name
+      OUTER:
       while (true) {
         final int ch = bufferedReader.read();
-        if (ch == 0) {
-          break;
-        } else if (ch == -1) {
-          throw new RuntimeException("ill formed file name: " + stringBuilder.toString());
-        } else {
-          stringBuilder.append((char) ch);
+        switch (ch) {
+          case 0:
+            break OUTER;
+
+          case -1:
+            throw new RuntimeException("ill formed file name: " + stringBuilder.toString());
+
+          default:
+            stringBuilder.append((char) ch);
+            break;
         }
       }
       final String fileName = stringBuilder.toString();
@@ -70,15 +80,19 @@ public class GraphRequest {
         throw new RuntimeException("graph request is missing the file name");
       }
       stringBuilder.setLength(0);
-      // parse zero-terminated labeled tree
+      OUTER_1:
       while (true) {
         final int ch = bufferedReader.read();
-        if (ch == 0) {
-          break;
-        } else if (ch == -1) {
-          throw new RuntimeException("ill formed labeled tree, fileName: " + fileName + ", labeledTree: " + stringBuilder.toString());
-        } else {
-          stringBuilder.append((char) ch);
+        switch (ch) {
+          case 0:
+            break OUTER_1;
+
+          case -1:
+            throw new RuntimeException("ill formed labeled tree, fileName: " + fileName + ", labeledTree: " + stringBuilder.toString());
+
+          default:
+            stringBuilder.append((char) ch);
+            break;
         }
       }
       final String labeledTree = stringBuilder.toString();
@@ -91,7 +105,8 @@ public class GraphRequest {
     }
   }
 
-  /** Serializes this graph request, for sending to the graph server.
+  /**
+   * Serializes this graph request, for sending to the graph server.
    *
    * @return the serialized request
    */
@@ -104,7 +119,8 @@ public class GraphRequest {
     return stringBuilder.toString();
   }
 
-  /** Gets the graph file name.
+  /**
+   * Gets the graph file name.
    *
    * @return the graph file name
    */
@@ -112,7 +128,8 @@ public class GraphRequest {
     return fileName;
   }
 
-  /** Gets the labeled tree that specifies the graph.
+  /**
+   * Gets the labeled tree that specifies the graph.
    *
    * @return the labeled tree that specifies the graph
    */
@@ -120,7 +137,8 @@ public class GraphRequest {
     return labeledTree;
   }
 
-  /** Returns a string representation of this object.
+  /**
+   * Returns a string representation of this object.
    *
    * @return a string representation of this object
    */
@@ -142,7 +160,8 @@ public class GraphRequest {
     this.fileName = fileName;
   }
 
-  /** Sets the labeled tree that specifies the graph.
+  /**
+   * Sets the labeled tree that specifies the graph.
    *
    * @param labeledTree the labeled tree that specifies the graph
    */

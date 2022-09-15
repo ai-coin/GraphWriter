@@ -45,7 +45,7 @@ import org.apache.log4j.Logger;
 /**
  * A singleton instance of this class listens on socket port 14446 for graph-writing requests, queues them, and serially emits
  * graphs.
- * 
+ *
  * phpsyntaxtree supports svg images which can contain embedded hyperlinks, as a future enhancement.
  *
  * @author reed
@@ -55,22 +55,31 @@ public class GraphWriter {
 
   // the logger, which is configured via log4j.properties to log to the file GraphWriter.log
   private static final Logger LOGGER = Logger.getLogger(GraphWriter.class);
+
   // the path to the graph writing server
   private static final String GRAPH_WRITER_PATH = System.getProperty("user.home") + "/GraphWriter-1.0";
+
   // the path to the PHP syntax tree tools
   private static final String PHP_SYNTAX_TREE_PATH = GRAPH_WRITER_PATH + "/phpsyntaxtree";
+
   // the listening port
   public static final int LISTENING_PORT = 14446;
+
   // the server thread
   private Thread serverThread;
+
   // the indicator to quit
   private final AtomicBoolean isQuit = new AtomicBoolean(false);
+
   // the ring buffer
   private RingBuffer<GraphRequest> ringBuffer;
+
   // the server socket
   private ServerSocket serverSocket = null;
+
   // the disruptor lock-free queue
   private Disruptor<GraphRequest> disruptor;
+
   // the graphing request thread pool
   private ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -122,6 +131,7 @@ public class GraphWriter {
 
     /**
      * Instantiates an event object, with all memory already allocated.
+     * @return the graph request
      */
     @Override
     public GraphRequest newInstance() {
@@ -155,10 +165,10 @@ public class GraphWriter {
     /**
      * Callback interface to be implemented for processing events as they become available in the RingBuffer
      *
-     * @param <T> event implementation storing the data for sharing during exchange or parallel coordination of an
-     * event.
+     * @param graphRequest the graph request
      * @param sequence sequence of the event being processed
      * @param endOfBatch indicates end of a batch of event entries from the ring buffer
+     * @throws java.lang.Exception the thrown exception
      */
     @Override
     public void onEvent(
@@ -179,8 +189,10 @@ public class GraphWriter {
         case "quit":
           graphWriter.finalization();
           return;
+
         case "ignore":
           return;
+
         default:
           graphWriter.graphLabeledTree(
                   graphRequest.getFileName(),
@@ -286,6 +298,7 @@ public class GraphWriter {
      * Constructs a new RequestHandler instance.
      *
      * @param graphWriter the graph writer
+     * @param clientSocket the client socket
      */
     RequestHandler(
             final GraphWriter graphWriter,
