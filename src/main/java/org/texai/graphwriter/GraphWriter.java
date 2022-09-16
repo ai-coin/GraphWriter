@@ -43,8 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.log4j.Logger;
 
 /**
- * A singleton instance of this class listens on socket port 14446 for graph-writing requests, queues them, and serially emits
- * graphs.
+ * A singleton instance of this class listens on socket port 14446 for graph-writing requests, queues them, and serially emits graphs.
  *
  * phpsyntaxtree supports svg images which can contain embedded hyperlinks, as a future enhancement.
  *
@@ -131,6 +130,7 @@ public class GraphWriter {
 
     /**
      * Instantiates an event object, with all memory already allocated.
+     *
      * @return the graph request
      */
     @Override
@@ -184,7 +184,9 @@ public class GraphWriter {
         return;
       }
       // process a new entry as it becomes available.
-      LOGGER.info("processing: " + graphRequest);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("processing: " + graphRequest);
+      }
       switch (graphRequest.getFileName()) {
         case "quit":
           graphWriter.finalization();
@@ -319,7 +321,7 @@ public class GraphWriter {
       try {
         bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
       } catch (IOException ex) {
-          throw new RuntimeException(ex);
+        throw new RuntimeException(ex);
       }
       final GraphRequest graphRequest = GraphRequest.makeGraphRequest(bufferedReader);
       if (LOGGER.isDebugEnabled()) {
@@ -335,8 +337,7 @@ public class GraphWriter {
   }
 
   /**
-   * Provides a disruptor event translator that populates a graph request slot in the ring buffer with a received graph
-   * request.
+   * Provides a disruptor event translator that populates a graph request slot in the ring buffer with a received graph request.
    */
   static class GraphRequestEventTranslatorOneArg implements EventTranslatorOneArg<GraphRequest, GraphRequest> {
 
@@ -478,8 +479,7 @@ public class GraphWriter {
   }
 
   /**
-   * Conveniently as a static method, called from within client code to determine whether the graph-writing server is
-   * running.
+   * Conveniently as a static method, called from within client code to determine whether the graph-writing server is running.
    *
    * @return whether the graph-writing server is running
    */
@@ -526,8 +526,8 @@ public class GraphWriter {
   }
 
   /**
-   * Conveniently as a static method, called from within client code to issue a graph request, or when checking whether
-   * the server is running.
+   * Conveniently as a static method, called from within client code to issue a graph request, or when checking whether the server is
+   * running.
    *
    * @param fileName
    * @param labeledTree
@@ -546,14 +546,14 @@ public class GraphWriter {
     try {
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("  connecting to localhost graph server on port: " + GraphWriter.LISTENING_PORT);
+        if (labeledTree.length() > 30) {
+          LOGGER.debug("  labeledTree: " + labeledTree.substring(0, 30) + " ...");
+        } else {
+          LOGGER.debug("  labeledTree: " + labeledTree);
+        }
       }
       final Socket socket = new Socket("127.0.0.1", GraphWriter.LISTENING_PORT);
-      if (labeledTree.length() > 30) {
-        LOGGER.info("  labeledTree: " + labeledTree.substring(0, 30) + " ...");
-      } else {
-        LOGGER.info("  labeledTree: " + labeledTree);
-      }
-      try (PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true)) {
+      try ( PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true)) {
         final GraphRequest graphRequest = new GraphRequest(fileName, labeledTree);
         printWriter.print(graphRequest.serialize());
         printWriter.flush();
