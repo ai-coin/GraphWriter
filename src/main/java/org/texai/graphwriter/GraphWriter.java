@@ -108,7 +108,7 @@ public class GraphWriter {
     // the lock-free ring buffer
     disruptor = new Disruptor(
             graphRequestFactory, // eventFactory,
-            2048, // ringBufferSize
+            4096, // ringBufferSize
             (ThreadFactory) DaemonThreadFactory.INSTANCE); // threadFactory);
 
     // the handler gets a gueued graph request from the ring buffer and executes a shell script to create the graph image
@@ -399,6 +399,8 @@ public class GraphWriter {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("  shell cmd: " + cmdArray[2]);
     }
+
+    // single thread the graph generation, only one php syntax tree process at a time
     try {
       final Process process = Runtime.getRuntime().exec(cmdArray);
       final StreamConsumer errorConsumer = new StreamConsumer(process.getErrorStream(), LOGGER);
