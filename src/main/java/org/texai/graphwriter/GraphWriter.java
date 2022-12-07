@@ -364,7 +364,7 @@ public class GraphWriter {
   }
 
   /**
-   * Emits a labeled tree graph for the parsing interpretation tree.
+   * Emits a labeled tree graph for the parsing interpretation tree. Synchronized to issue only one graph at at time.
    *
    * @param filePath the graph file path
    * @param labeledTree the labeled tree
@@ -378,52 +378,54 @@ public class GraphWriter {
     assert labeledTree != null : "labeledTree must not be null";
     assert !labeledTree.isEmpty() : "labeledTree must not be empty for: " + filePath;
 
-    if (System.getProperty("file.separator").equals("\\")) {
-      // do not try to create a PHP syntax tree on Windows
-      return;
-    }
-    String[] cmdArray = {
-      "sh",
-      "-c",
-      ""
-    };
-    final StringBuilder stringBuilder = new StringBuilder();
-    stringBuilder.append("cd ");
-    stringBuilder.append(PHP_SYNTAX_TREE_PATH);
-    stringBuilder.append(" ; php graph.php ");
-    stringBuilder.append(filePath);
-    stringBuilder.append(".png \"");
-    stringBuilder.append(labeledTree);
-    stringBuilder.append("\"");
-    cmdArray[2] = stringBuilder.toString();
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("  shell cmd: " + cmdArray[2]);
-    }
-
-    // single thread the graph generation, only one php syntax tree process at a time
-    try {
-      final Process process = Runtime.getRuntime().exec(cmdArray);
-      final StreamConsumer errorConsumer = new StreamConsumer(process.getErrorStream(), LOGGER);
-      final StreamConsumer outputConsumer = new StreamConsumer(process.getInputStream(), LOGGER);
-      errorConsumer.setName("errorConsumer");
-      errorConsumer.start();
-      outputConsumer.setName("outputConsumer");
-      outputConsumer.start();
-      int exitVal = process.waitFor();
+      if (System.getProperty("file.separator").equals("\\")) {
+        // do not try to create a PHP syntax tree on Windows
+        return;
+      }
+      String[] cmdArray = {
+        "sh",
+        "-c",
+        ""
+      };
+      final StringBuilder stringBuilder = new StringBuilder();
+      stringBuilder.append("cd ");
+      stringBuilder.append(PHP_SYNTAX_TREE_PATH);
+      stringBuilder.append(" ; php graph.php ");
+      stringBuilder.append(filePath);
+      stringBuilder.append(".png \"");
+      stringBuilder.append(labeledTree);
+      stringBuilder.append("\"");
+      cmdArray[2] = stringBuilder.toString();
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("  exitVal: " + exitVal);
-      } else if (exitVal != 0) {
-        LOGGER.warn("process terminated with a non-zero exit value " + exitVal);
+        LOGGER.debug("  shell cmd: " + cmdArray[2]);
       }
 
-      process.getInputStream().close();
-      process.getOutputStream().close();
-    } catch (InterruptedException ex) {
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("interrupted");
+    synchronized (this) {
+      // single thread the graph generation, only one php syntax tree process at a time
+      try {
+        final Process process = Runtime.getRuntime().exec(cmdArray);
+        final StreamConsumer errorConsumer = new StreamConsumer(process.getErrorStream(), LOGGER);
+        final StreamConsumer outputConsumer = new StreamConsumer(process.getInputStream(), LOGGER);
+        errorConsumer.setName("errorConsumer");
+        errorConsumer.start();
+        outputConsumer.setName("outputConsumer");
+        outputConsumer.start();
+        int exitVal = process.waitFor();
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("  exitVal: " + exitVal);
+        } else if (exitVal != 0) {
+          LOGGER.warn("process terminated with a non-zero exit value " + exitVal);
+        }
+
+        process.getInputStream().close();
+        process.getOutputStream().close();
+      } catch (InterruptedException ex) {
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("interrupted");
+        }
+      } catch (final IOException ex) {
+        throw new RuntimeException(ex);
       }
-    } catch (final IOException ex) {
-      throw new RuntimeException(ex);
     }
   }
 
