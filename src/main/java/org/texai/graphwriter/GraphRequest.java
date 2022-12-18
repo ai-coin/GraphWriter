@@ -18,7 +18,7 @@ import java.io.IOException;
  *
  * @author reed
  */
-public class GraphRequest {
+public class GraphRequest extends AbstractGraphRequest {
 
   // the serial version UID
   private static final long serialVersionUID = 1L;
@@ -26,7 +26,7 @@ public class GraphRequest {
   // the graph file name
   private String fileName;
 
-  // the labeled tree that specifies the graph
+  // the labeled tree that specifies the PHP syntax graph
   private String labeledTree;
 
   /**
@@ -38,9 +38,8 @@ public class GraphRequest {
   public GraphRequest(
           final String fileName,
           final String labeledTree) {
+    super(fileName);
     //Preconditions
-    assert fileName != null : "fileName must not be null";
-    assert !fileName.isEmpty() : "fileName must not be empty";
     assert labeledTree != null : "labeledTree must not be null";
     assert !labeledTree.isEmpty() : "labeledTree must not be empty";
 
@@ -120,15 +119,6 @@ public class GraphRequest {
   }
 
   /**
-   * Gets the graph file name.
-   *
-   * @return the graph file name
-   */
-  public String getFileName() {
-    return fileName;
-  }
-
-  /**
    * Gets the labeled tree that specifies the graph.
    *
    * @return the labeled tree that specifies the graph
@@ -145,19 +135,6 @@ public class GraphRequest {
   @Override
   public String toString() {
     return "[GraphRequest " + fileName + "]";
-  }
-
-  /**
-   * Sets the graph file name.
-   *
-   * @param fileName the graph file name
-   */
-  public void setFileName(final String fileName) {
-    //Preconditions
-    assert fileName != null : "fileName must not be null";
-    assert !fileName.isEmpty() : "fileName must not be empty";
-
-    this.fileName = fileName;
   }
 
   /**

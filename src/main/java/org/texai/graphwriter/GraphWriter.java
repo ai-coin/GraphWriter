@@ -40,6 +40,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -100,6 +101,7 @@ public class GraphWriter {
    */
   public void initialialization() {
 
+    LOGGER.setLevel(Level.DEBUG);
     Thread.currentThread().setName("main");
     LOGGER.debug("is debug logging...");
     // listens for graph requests on the server socket, and puts them into the ring buffer
@@ -533,8 +535,8 @@ public class GraphWriter {
    * Conveniently as a static method, called from within client code to issue a graph request, or when checking whether the server is
    * running.
    *
-   * @param fileName
-   * @param labeledTree
+   * @param fileName the file name without .dot extension
+   * @param labeledTree the graph writer debugging description
    *
    * @return true if no errors occurred
    */

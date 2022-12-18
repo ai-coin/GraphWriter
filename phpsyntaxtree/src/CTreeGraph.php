@@ -23,7 +23,7 @@
 
 require_once( "src/smoothline.php" );
 require_once( "src/imgutils.php" );
-require_once( "src/class.elementlist.php" );
+require_once( "src/CElementList.php" );
 
 define('E_WIDTH', 60);   // Element width
 define('E_PADD', 5);   // Element height padding
@@ -38,7 +38,7 @@ class CTreeGraph {
   // PUBLIC FUNCTIONS
   // ----------------------------------------------------------------------
   // Constructor
-  function CTreeGraph(
+  function __construct(
           &$e_list_ref
           , $color = TRUE, $antialias = TRUE, $triangles = TRUE
           , $font = "Vera.ttf", $fontsize = 8) {
@@ -177,7 +177,7 @@ class CTreeGraph {
       $col = $this->col_trace;
       // remove trace delimiters from the main text
       $main = substr($main, 1, strlen($main) - 2);
-    } 
+    }
     if (substr($main, 0, 1) == "'" && substr($main, strlen($main) - 1, 1) == "'") {
       $col = $this->col_fg;
       // remove literal delimiters from the main text
