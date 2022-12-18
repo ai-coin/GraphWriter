@@ -3,7 +3,7 @@
  *
  * Created on Aug 10, 2011, 8:33:33 AM
  *
- * Description: Provides a graph request.
+ * Description: Provides a PHP syntax tree graph request.
  *
  * Copyright (C) Aug 10, 2011, Stephen L. Reed, Texai.org.
  *
@@ -12,18 +12,19 @@ package org.texai.graphwriter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import org.texai.util.StringUtils;
 
 /**
  * Provides a graph request.
  *
  * @author reed
  */
-public class GraphRequest extends AbstractGraphRequest {
+public class GraphRequest {
 
   // the serial version UID
   private static final long serialVersionUID = 1L;
 
-  // the graph file name
+  // the graph file name without an extension
   private String fileName;
 
   // the labeled tree that specifies the PHP syntax graph
@@ -38,7 +39,6 @@ public class GraphRequest extends AbstractGraphRequest {
   public GraphRequest(
           final String fileName,
           final String labeledTree) {
-    super(fileName);
     //Preconditions
     assert labeledTree != null : "labeledTree must not be null";
     assert !labeledTree.isEmpty() : "labeledTree must not be empty";
@@ -116,6 +116,27 @@ public class GraphRequest extends AbstractGraphRequest {
     stringBuilder.append(labeledTree);
     stringBuilder.append((char) 0);
     return stringBuilder.toString();
+  }
+
+  /**
+   * Gets the graph file name without an extension.
+   *
+   * @return the graph file name without an extension
+   */
+  public String getFileName() {
+    return fileName;
+  }
+
+  /**
+   * Sets the graph file name without an extension.
+   *
+   * @param fileName the graph file name without an extension
+   */
+  public void setFileName(final String fileName) {
+    //Preconditions
+    assert StringUtils.isNonEmptyString(fileName) : "fileName must be a non-empty character string";
+
+    this.fileName = fileName;
   }
 
   /**

@@ -37,7 +37,7 @@ public class GraphWriterTest {
 
     Logger.getLogger(GraphWriter.class).setLevel(Level.DEBUG);
     LOGGER.info("connecting with an existing GraphWriter to shut it down...");
-    final boolean isOK = GraphWriter.issueGraphRequest("quit", "quit");
+    final boolean isOK = GraphWriter.issuePHPGraphRequest("quit", "quit");
     if (isOK) {
       LOGGER.info("  existing GraphWriter server shut down");
     } else {
@@ -61,7 +61,7 @@ public class GraphWriterTest {
   }
 
   /**
-   * Test of graphLabeledTree method, of class GraphWriter.
+   * Test of graphPHPSyntaxTree method, of class GraphWriter.
    */
   @Test
   public void testGraphLabeledTree2() {
@@ -100,7 +100,7 @@ public class GraphWriterTest {
   private void issueGraphRequest(final int sequence) {
     final String fileName = System.getProperty("user.home") + "/GraphWriter-1.0/graphs/test";
     String labeledTree = "[test_" + sequence + "/1]";
-    GraphWriter.issueGraphRequest(
+    GraphWriter.issuePHPGraphRequest(
             fileName + sequence,
             labeledTree);
   }

@@ -26,11 +26,6 @@ require_once( "src/CTreeGraph.php" );
 
 $outputfile = $argv[1]; // filename
 $data = $argv[2]; // parse data
-printf("\noutputFile1...\n");
-printf($outputfile);
-printf("\ndata...\n");
-printf($data);
-
 $color = 1;
 $triangles = FALSE;
 $antialias = 1;   // smooth lines

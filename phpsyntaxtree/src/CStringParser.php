@@ -47,8 +47,6 @@ class CStringParser {
   // ----------------------------------------------------------------------
 
   function __construct($s) {
-    printf("\n__construct s...\n");
-    printf($s);
     // Clean up the data a little to make processing easier
 
     $s = str_replace("\t", "", $s);

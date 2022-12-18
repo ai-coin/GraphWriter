@@ -46,7 +46,7 @@ import org.apache.log4j.Logger;
 /**
  * A singleton instance of this class listens on socket port 14446 for graph-writing requests, queues them, and serially emits graphs.
  *
- * phpsyntaxtree supports svg images which can contain embedded hyperlinks, as a future enhancement.
+ * phpsyntaxtree supports SVG images which can contain embedded hyperlinks, as a future enhancement.
  *
  * @author reed
  */
@@ -83,6 +83,9 @@ public class GraphWriter {
   // the graphing request thread pool
   private ExecutorService executor = Executors.newCachedThreadPool();
 
+  // the GraphViz request indicator which files the labeledTree field otherwise used for a PHP syntax tree string
+  private static final String GRAPHVIZ = "*GraphViz*";
+
   /**
    * Constructs a new GraphWriter instance.
    */
@@ -100,8 +103,8 @@ public class GraphWriter {
    * Initializes this application.
    */
   public void initialialization() {
-
-    LOGGER.setLevel(Level.DEBUG);
+    
+    //LOGGER.setLevel(Level.DEBUG);
     Thread.currentThread().setName("main");
     LOGGER.debug("is debug logging...");
     // listens for graph requests on the server socket, and puts them into the ring buffer
@@ -115,7 +118,7 @@ public class GraphWriter {
 
     // the handler gets a gueued graph request from the ring buffer and executes a shell script to create the graph image
     disruptor.handleEventsWith(new GraphRequestEventHandler(this));
-
+    
     disruptor.start();
     ringBuffer = disruptor.getRingBuffer();
 
@@ -141,7 +144,7 @@ public class GraphWriter {
               "initial", // fileName,
               "initial"); // labeledTree
     }
-
+    
   }
 
   /**
@@ -160,7 +163,7 @@ public class GraphWriter {
     public GraphRequestEventHandler(final GraphWriter graphWriter) {
       //Preconditions
       assert graphWriter != null : "graphWriter must not be null";
-
+      
       this.graphWriter = graphWriter;
     }
 
@@ -180,7 +183,7 @@ public class GraphWriter {
       //Preconditions
       assert graphRequest != null : "event must not be null";
       assert sequence >= 0 : "sequence must not be negative";
-
+      
       Thread.currentThread().setName("event-handler");
       if (graphWriter.isQuit.get()) {
         return;
@@ -193,18 +196,22 @@ public class GraphWriter {
         case "quit":
           graphWriter.finalization();
           return;
-
+        
         case "ignore":
           return;
-
+        
         default:
-          graphWriter.graphLabeledTree(
-                  graphRequest.getFileName(),
-                  graphRequest.getLabeledTree());
+          if (GRAPHVIZ.equals(graphRequest.getLabeledTree())) {
+            graphWriter.graphVizDiagram(graphRequest.getFileName());
+          } else {
+            graphWriter.graphPHPSyntaxTree(
+                    graphRequest.getFileName(),
+                    graphRequest.getLabeledTree());
+          }
           break;
       }
     }
-
+    
   }
 
   /**
@@ -241,7 +248,7 @@ public class GraphWriter {
     RequestServer(final GraphWriter graphWriter) {
       //Preconditions
       assert graphWriter != null : "graphWriter must not be null";
-
+      
       this.graphWriter = graphWriter;
     }
 
@@ -273,7 +280,7 @@ public class GraphWriter {
           final RequestHandler requestHandler = new RequestHandler(graphWriter, clientSocket);
           graphWriter.executor.execute(requestHandler);
         }
-
+        
       } catch (SocketException ex) {
         if (!graphWriter.isQuit.get()) {
           throw new RuntimeException(ex);
@@ -309,7 +316,7 @@ public class GraphWriter {
             final Socket clientSocket) {
       //Preconditions
       assert graphWriter != null : "graphWriter must not be null";
-
+      
       this.graphWriter = graphWriter;
       this.clientSocket = clientSocket;
     }
@@ -329,13 +336,13 @@ public class GraphWriter {
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("queuing: " + graphRequest);
       }
-      // put the request into the ring buffer
 
+      // put the request into the ring buffer
       graphWriter.ringBuffer.publishEvent(
               graphRequestEventTranslatorOneArg,
               graphRequest); // arg0, the request to be moved field by field into the next ring buffer slot
     }
-
+    
   }
 
   /**
@@ -359,7 +366,7 @@ public class GraphWriter {
       assert event != null : "event must not be null";
       assert sequence >= 0 : "sequence must not be negative";
       assert arg0 != null : "arg0 must not be null";
-
+      
       event.setFileName(arg0.getFileName());
       event.setLabeledTree(arg0.getLabeledTree());
     }
@@ -371,7 +378,7 @@ public class GraphWriter {
    * @param filePath the graph file path
    * @param labeledTree the labeled tree
    */
-  public void graphLabeledTree(
+  public void graphPHPSyntaxTree(
           final String filePath,
           final String labeledTree) {
     //Preconditions
@@ -379,31 +386,31 @@ public class GraphWriter {
     assert !filePath.isEmpty() : "filePath must not be empty";
     assert labeledTree != null : "labeledTree must not be null";
     assert !labeledTree.isEmpty() : "labeledTree must not be empty for: " + filePath;
-
-      if (System.getProperty("file.separator").equals("\\")) {
-        // do not try to create a PHP syntax tree on Windows
-        return;
-      }
-      String[] cmdArray = {
-        "sh",
-        "-c",
-        ""
-      };
-      final StringBuilder stringBuilder = new StringBuilder();
-      stringBuilder.append("cd ");
-      stringBuilder.append(PHP_SYNTAX_TREE_PATH);
-      stringBuilder.append(" ; php graph.php ");
-      stringBuilder.append(filePath);
-      stringBuilder.append(".png \"");
-      stringBuilder.append(labeledTree);
-      stringBuilder.append("\"");
-      cmdArray[2] = stringBuilder.toString();
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("  shell cmd: " + cmdArray[2]);
-      }
-
+    
+    if (System.getProperty("file.separator").equals("\\")) {
+      // do not try to create a PHP syntax tree on Windows
+      return;
+    }
+    String[] cmdArray = {
+      "sh",
+      "-c",
+      ""
+    };
+    final StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append("cd ");
+    stringBuilder.append(PHP_SYNTAX_TREE_PATH);
+    stringBuilder.append(" ; php graph.php ");
+    stringBuilder.append(filePath);
+    stringBuilder.append(".png \"");
+    stringBuilder.append(labeledTree);
+    stringBuilder.append("\"");
+    cmdArray[2] = stringBuilder.toString();
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("  shell cmd: " + cmdArray[2]);
+    }
+    
     synchronized (this) {
-      // single thread the graph generation, only one php syntax tree process at a time
+      // single thread the graph generation, only one graph process at a time
       try {
         final Process process = Runtime.getRuntime().exec(cmdArray);
         final StreamConsumer errorConsumer = new StreamConsumer(process.getErrorStream(), LOGGER);
@@ -418,7 +425,7 @@ public class GraphWriter {
         } else if (exitVal != 0) {
           LOGGER.warn("process terminated with a non-zero exit value " + exitVal);
         }
-
+        
         process.getInputStream().close();
         process.getOutputStream().close();
       } catch (InterruptedException ex) {
@@ -431,6 +438,65 @@ public class GraphWriter {
     }
   }
 
+  /**
+   * Emits a GraphViz diagram. Synchronized to issue only one graph at at time.
+   *
+   * @param filePath the graph file path
+   */
+  public void graphVizDiagram(final String filePath) {
+    //Preconditions
+    assert filePath != null : "filePath must not be null";
+    assert !filePath.isEmpty() : "filePath must not be empty";
+    
+    if (System.getProperty("file.separator").equals("\\")) {
+      // do not try to create a PHP syntax tree on Windows
+      return;
+    }
+    String[] cmdArray = {
+      "sh",
+      "-c",
+      ""
+    };
+    cmdArray[2] = new StringBuilder()
+            .append("cd; dot -Tpng ")
+            .append(filePath)
+            .append(".dot -o ")
+            .append(filePath)
+            .append(".png")
+            .toString();
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("  shell cmd: " + cmdArray[2]);
+    }
+    
+    synchronized (this) {
+      // single thread the graph generation, only one graph process at a time
+      try {
+        final Process process = Runtime.getRuntime().exec(cmdArray);
+        final StreamConsumer errorConsumer = new StreamConsumer(process.getErrorStream(), LOGGER);
+        final StreamConsumer outputConsumer = new StreamConsumer(process.getInputStream(), LOGGER);
+        errorConsumer.setName("errorConsumer");
+        errorConsumer.start();
+        outputConsumer.setName("outputConsumer");
+        outputConsumer.start();
+        int exitVal = process.waitFor();
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("  exitVal: " + exitVal);
+        } else if (exitVal != 0) {
+          LOGGER.warn("process terminated with a non-zero exit value " + exitVal);
+        }
+        
+        process.getInputStream().close();
+        process.getOutputStream().close();
+      } catch (InterruptedException ex) {
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("interrupted");
+        }
+      } catch (final IOException ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+  }
+  
   static class StreamConsumer extends Thread {
 
     // the input stream that consumes the launched process standard output or standard error stream
@@ -450,7 +516,7 @@ public class GraphWriter {
       //Preconditions
       assert inputStream != null : "inputStream must not be null";
       assert logger != null : "logger must not be null";
-
+      
       this.inputStream = inputStream;
       this.logger = logger;
     }
@@ -493,7 +559,7 @@ public class GraphWriter {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("issuing a graph request to see if the graph-writing server is running...");
     }
-    return issueGraphRequest("ignore", "ignore");
+    return issuePHPGraphRequest("ignore", "ignore");
   }
 
   /**
@@ -527,20 +593,20 @@ public class GraphWriter {
         Thread.sleep(5_000);
       } catch (InterruptedException ex2) {
       }
-
+      
     }
   }
 
   /**
-   * Conveniently as a static method, called from within client code to issue a graph request, or when checking whether the server is
-   * running.
+   * Conveniently as a static method, called from within client code to issue a PHP syntax tree graph request, or when checking whether the
+   * server is running.
    *
    * @param fileName the file name without .dot extension
    * @param labeledTree the graph writer debugging description
    *
-   * @return true if no errors occurred
+   * @return true if no errors occurred, or return false if the server is not running
    */
-  public static boolean issueGraphRequest(
+  public static boolean issuePHPGraphRequest(
           final String fileName,
           final String labeledTree) {
     //Preconditions
@@ -548,7 +614,7 @@ public class GraphWriter {
     assert !fileName.isEmpty() : "fileName must not be empty";
     assert labeledTree != null : "labeledTree must not be null";
     assert !labeledTree.isEmpty() : "labeledTree must not be empty";
-
+    
     try {
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("  connecting to localhost graph server on port: " + GraphWriter.LISTENING_PORT);
@@ -559,8 +625,42 @@ public class GraphWriter {
         }
       }
       final Socket socket = new Socket("127.0.0.1", GraphWriter.LISTENING_PORT);
-      try ( PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true)) {
+      try (PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true)) {
         final GraphRequest graphRequest = new GraphRequest(fileName, labeledTree);
+        printWriter.print(graphRequest.serialize());
+        printWriter.flush();
+      }
+      return true;
+    } catch (IOException ex) {
+      if (!fileName.equals("ignore")) {
+        LOGGER.error("  received exception: " + ex.getMessage());
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Conveniently as a static method, called from within client code to issue a GraphViz diagram request, or when checking whether the
+   * server is running.
+   *
+   * @param fileName the file name without .dot extension
+   *
+   * @return true if no errors occurred
+   */
+  public static boolean issueGraphVizRequest(final String fileName) {
+    //Preconditions
+    assert fileName != null : "fileName must not be null";
+    assert !fileName.isEmpty() : "fileName must not be empty";
+    
+    try {
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("  connecting to localhost graph server on port: " + GraphWriter.LISTENING_PORT);
+      }
+      final Socket socket = new Socket("127.0.0.1", GraphWriter.LISTENING_PORT);
+      try (PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true)) {
+        final GraphRequest graphRequest = new GraphRequest(
+                fileName,
+                GRAPHVIZ); // labeledTree
         printWriter.print(graphRequest.serialize());
         printWriter.flush();
       }
@@ -582,7 +682,7 @@ public class GraphWriter {
       Thread.sleep(10_000);
     } catch (InterruptedException ex2) {
     }
-    issueGraphRequest("quit", "quit");
+    issuePHPGraphRequest("quit", "quit");
   }
-
+  
 }
