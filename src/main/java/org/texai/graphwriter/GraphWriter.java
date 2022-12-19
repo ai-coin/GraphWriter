@@ -40,7 +40,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -131,7 +130,7 @@ public class GraphWriter {
   /**
    * Provides an initialized graph request factory for filling the ring buffer.
    */
-  static class GraphRequestFactory implements EventFactory<GraphRequest> {
+  private static class GraphRequestFactory implements EventFactory<GraphRequest> {
 
     /**
      * Instantiates an event object, with all memory already allocated.
@@ -150,7 +149,7 @@ public class GraphWriter {
   /**
    * Provides a graph request event handler for emptying the ring buffer.
    */
-  static class GraphRequestEventHandler implements EventHandler<GraphRequest> {
+  private static class GraphRequestEventHandler implements EventHandler<GraphRequest> {
 
     // the parent GraphWriter instance
     private final GraphWriter graphWriter;
@@ -160,7 +159,7 @@ public class GraphWriter {
      *
      * @param graphWriter the graph writer
      */
-    public GraphRequestEventHandler(final GraphWriter graphWriter) {
+    GraphRequestEventHandler(final GraphWriter graphWriter) {
       //Preconditions
       assert graphWriter != null : "graphWriter must not be null";
       
@@ -193,14 +192,16 @@ public class GraphWriter {
         LOGGER.debug("processing: " + graphRequest);
       }
       switch (graphRequest.getFileName()) {
-        case "quit":
+        case "quit" -> {
           graphWriter.finalization();
           return;
+        }
         
-        case "ignore":
+        case "ignore" -> {
           return;
+        }
         
-        default:
+        default -> {
           if (GRAPHVIZ.equals(graphRequest.getLabeledTree())) {
             graphWriter.graphVizDiagram(graphRequest.getFileName());
           } else {
@@ -208,7 +209,7 @@ public class GraphWriter {
                     graphRequest.getFileName(),
                     graphRequest.getLabeledTree());
           }
-          break;
+        }
       }
     }
     
@@ -235,7 +236,7 @@ public class GraphWriter {
   /**
    * Provides a request server that listens on a certain port for graphing requests, and then queues them.
    */
-  static class RequestServer implements Runnable {
+  private static class RequestServer implements Runnable {
 
     // the graph writer
     private final GraphWriter graphWriter;
@@ -294,7 +295,7 @@ public class GraphWriter {
   /**
    * Provides a runnable to handle a graph request on the server socket.
    */
-  static class RequestHandler implements Runnable {
+  private static class RequestHandler implements Runnable {
 
     // the graph writer
     private final GraphWriter graphWriter;
@@ -348,7 +349,7 @@ public class GraphWriter {
   /**
    * Provides a disruptor event translator that populates a graph request slot in the ring buffer with a received graph request.
    */
-  static class GraphRequestEventTranslatorOneArg implements EventTranslatorOneArg<GraphRequest, GraphRequest> {
+  private static class GraphRequestEventTranslatorOneArg implements EventTranslatorOneArg<GraphRequest, GraphRequest> {
 
     /**
      * Translates a data representation into fields set in the given event
@@ -396,7 +397,7 @@ public class GraphWriter {
       "-c",
       ""
     };
-    final StringBuilder stringBuilder = new StringBuilder();
+    final StringBuilder stringBuilder = new StringBuilder(1000);
     stringBuilder.append("cd ");
     stringBuilder.append(PHP_SYNTAX_TREE_PATH);
     stringBuilder.append(" ; php graph.php ");
@@ -449,7 +450,7 @@ public class GraphWriter {
     assert !filePath.isEmpty() : "filePath must not be empty";
     
     if (System.getProperty("file.separator").equals("\\")) {
-      // do not try to create a PHP syntax tree on Windows
+      // do not try to create a GraphViz syntax tree on Windows
       return;
     }
     String[] cmdArray = {
@@ -457,12 +458,15 @@ public class GraphWriter {
       "-c",
       ""
     };
-    cmdArray[2] = new StringBuilder()
+    cmdArray[2] = new StringBuilder(200)
             .append("cd; dot -Tpng ")
             .append(filePath)
             .append(".dot -o ")
             .append(filePath)
-            .append(".png")
+            .append(".png; rm ")
+            .append(filePath)
+            .append(".dot")
+            
             .toString();
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("  shell cmd: " + cmdArray[2]);
@@ -497,7 +501,7 @@ public class GraphWriter {
     }
   }
   
-  static class StreamConsumer extends Thread {
+  private static class StreamConsumer extends Thread {
 
     // the input stream that consumes the launched process standard output or standard error stream
     private final InputStream inputStream;
@@ -510,7 +514,7 @@ public class GraphWriter {
      * @param inputStream the input stream
      * @param logger the logger
      */
-    public StreamConsumer(
+    StreamConsumer(
             final InputStream inputStream,
             final Logger logger) {
       //Preconditions
@@ -525,6 +529,7 @@ public class GraphWriter {
      * Runs this stream consumer.
      */
     @Override
+    @SuppressWarnings("NestedAssignment")
     public void run() {
       try {
         try (final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))) {
@@ -575,7 +580,7 @@ public class GraphWriter {
         "-c",
         ""
       };
-      final StringBuilder stringBuilder = new StringBuilder();
+      final StringBuilder stringBuilder = new StringBuilder(100);
       stringBuilder.append("cd ");
       stringBuilder.append(GRAPH_WRITER_PATH);
       stringBuilder.append(" ; ./run-graph-writer.sh");
