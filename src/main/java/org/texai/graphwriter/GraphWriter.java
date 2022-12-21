@@ -103,7 +103,7 @@ public class GraphWriter {
    */
   public void initialialization() {
     
-    //LOGGER.setLevel(Level.DEBUG);
+    //LOGGER.setLevel(org.apache.log4j.Level.DEBUG);
     Thread.currentThread().setName("main");
     LOGGER.debug("is debug logging...");
     // listens for graph requests on the server socket, and puts them into the ring buffer
