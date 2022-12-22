@@ -80,10 +80,16 @@ public class GraphWriter {
   private Disruptor<GraphRequest> disruptor;
 
   // the graphing request thread pool
-  private ExecutorService executor = Executors.newCachedThreadPool();
+  private ExecutorService graphingRequestExecutor = Executors.newCachedThreadPool();
 
   // the GraphViz request indicator which files the labeledTree field otherwise used for a PHP syntax tree string
   private static final String GRAPHVIZ = "*GraphViz*";
+
+  static {
+    assert Runtime.getRuntime().availableProcessors() >= 4;
+  }
+  // the graph making thread pool using all process threads less three reserved for the application
+  ExecutorService graphMakingExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() - 3);
 
   /**
    * Constructs a new GraphWriter instance.
@@ -102,7 +108,7 @@ public class GraphWriter {
    * Initializes this application.
    */
   public void initialialization() {
-    
+
     //LOGGER.setLevel(org.apache.log4j.Level.DEBUG);
     Thread.currentThread().setName("main");
     LOGGER.debug("is debug logging...");
@@ -117,7 +123,7 @@ public class GraphWriter {
 
     // the handler gets a gueued graph request from the ring buffer and executes a shell script to create the graph image
     disruptor.handleEventsWith(new GraphRequestEventHandler(this));
-    
+
     disruptor.start();
     ringBuffer = disruptor.getRingBuffer();
 
@@ -143,7 +149,7 @@ public class GraphWriter {
               "initial", // fileName,
               "initial"); // labeledTree
     }
-    
+
   }
 
   /**
@@ -162,7 +168,7 @@ public class GraphWriter {
     GraphRequestEventHandler(final GraphWriter graphWriter) {
       //Preconditions
       assert graphWriter != null : "graphWriter must not be null";
-      
+
       this.graphWriter = graphWriter;
     }
 
@@ -182,11 +188,47 @@ public class GraphWriter {
       //Preconditions
       assert graphRequest != null : "event must not be null";
       assert sequence >= 0 : "sequence must not be negative";
-      
+
       Thread.currentThread().setName("event-handler");
-      if (graphWriter.isQuit.get()) {
-        return;
+      if (!graphWriter.isQuit.get()) {
+
+        final GraphMakingRunnable graphMakingRunnable = new GraphMakingRunnable(
+                graphWriter,
+                graphRequest);
+
+        // multiple threads make the requested graph, manually adjusted for CPU capacity
+        graphWriter.graphMakingExecutor.execute(graphMakingRunnable);
       }
+    }
+  }
+
+  /**
+   * Provides a graph making thread.
+   */
+  private static class GraphMakingRunnable implements Runnable {
+
+    // the parent GraphWriter instance
+    private final GraphWriter graphWriter;
+
+    // the graph request
+    final GraphRequest graphRequest;
+
+    GraphMakingRunnable(
+            final GraphWriter graphWriter,
+            final GraphRequest graphRequest) {
+      //Preconditions
+      assert graphWriter != null : "graphWriter must not be null";
+      assert graphRequest != null : "graphRequest must not be null";
+
+      this.graphWriter = graphWriter;
+      this.graphRequest = graphRequest;
+    }
+
+    /**
+     * Makes the desired graph.
+     */
+    @Override
+    public void run() {
       // process a new entry as it becomes available.
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("processing: " + graphRequest);
@@ -196,11 +238,11 @@ public class GraphWriter {
           graphWriter.finalization();
           return;
         }
-        
+
         case "ignore" -> {
           return;
         }
-        
+
         default -> {
           if (GRAPHVIZ.equals(graphRequest.getLabeledTree())) {
             graphWriter.graphVizDiagram(graphRequest.getFileName());
@@ -212,7 +254,7 @@ public class GraphWriter {
         }
       }
     }
-    
+
   }
 
   /**
@@ -228,7 +270,7 @@ public class GraphWriter {
       serverSocket.close();
     } catch (IOException ex) {
     }
-    executor.shutdown();
+    graphingRequestExecutor.shutdown();
     LOGGER.info("GraphWriter shutdown.");
     System.exit(0);
   }
@@ -249,7 +291,7 @@ public class GraphWriter {
     RequestServer(final GraphWriter graphWriter) {
       //Preconditions
       assert graphWriter != null : "graphWriter must not be null";
-      
+
       this.graphWriter = graphWriter;
     }
 
@@ -279,9 +321,9 @@ public class GraphWriter {
             return;
           }
           final RequestHandler requestHandler = new RequestHandler(graphWriter, clientSocket);
-          graphWriter.executor.execute(requestHandler);
+          graphWriter.graphingRequestExecutor.execute(requestHandler);
         }
-        
+
       } catch (SocketException ex) {
         if (!graphWriter.isQuit.get()) {
           throw new RuntimeException(ex);
@@ -317,7 +359,7 @@ public class GraphWriter {
             final Socket clientSocket) {
       //Preconditions
       assert graphWriter != null : "graphWriter must not be null";
-      
+
       this.graphWriter = graphWriter;
       this.clientSocket = clientSocket;
     }
@@ -343,7 +385,7 @@ public class GraphWriter {
               graphRequestEventTranslatorOneArg,
               graphRequest); // arg0, the request to be moved field by field into the next ring buffer slot
     }
-    
+
   }
 
   /**
@@ -367,7 +409,7 @@ public class GraphWriter {
       assert event != null : "event must not be null";
       assert sequence >= 0 : "sequence must not be negative";
       assert arg0 != null : "arg0 must not be null";
-      
+
       event.setFileName(arg0.getFileName());
       event.setLabeledTree(arg0.getLabeledTree());
     }
@@ -387,7 +429,7 @@ public class GraphWriter {
     assert !filePath.isEmpty() : "filePath must not be empty";
     assert labeledTree != null : "labeledTree must not be null";
     assert !labeledTree.isEmpty() : "labeledTree must not be empty for: " + filePath;
-    
+
     if (System.getProperty("file.separator").equals("\\")) {
       // do not try to create a PHP syntax tree on Windows
       return;
@@ -409,33 +451,30 @@ public class GraphWriter {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("  shell cmd: " + cmdArray[2]);
     }
-    
-    synchronized (this) {
-      // single thread the graph generation, only one graph process at a time
-      try {
-        final Process process = Runtime.getRuntime().exec(cmdArray);
-        final StreamConsumer errorConsumer = new StreamConsumer(process.getErrorStream(), LOGGER);
-        final StreamConsumer outputConsumer = new StreamConsumer(process.getInputStream(), LOGGER);
-        errorConsumer.setName("errorConsumer");
-        errorConsumer.start();
-        outputConsumer.setName("outputConsumer");
-        outputConsumer.start();
-        int exitVal = process.waitFor();
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("  exitVal: " + exitVal);
-        } else if (exitVal != 0) {
-          LOGGER.warn("process terminated with a non-zero exit value " + exitVal);
-        }
-        
-        process.getInputStream().close();
-        process.getOutputStream().close();
-      } catch (InterruptedException ex) {
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("interrupted");
-        }
-      } catch (final IOException ex) {
-        throw new RuntimeException(ex);
+
+    try {
+      final Process process = Runtime.getRuntime().exec(cmdArray);
+      final StreamConsumer errorConsumer = new StreamConsumer(process.getErrorStream(), LOGGER);
+      final StreamConsumer outputConsumer = new StreamConsumer(process.getInputStream(), LOGGER);
+      errorConsumer.setName("errorConsumer");
+      errorConsumer.start();
+      outputConsumer.setName("outputConsumer");
+      outputConsumer.start();
+      int exitVal = process.waitFor();
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("  exitVal: " + exitVal);
+      } else if (exitVal != 0) {
+        LOGGER.warn("process terminated with a non-zero exit value " + exitVal);
       }
+
+      process.getInputStream().close();
+      process.getOutputStream().close();
+    } catch (InterruptedException ex) {
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("interrupted");
+      }
+    } catch (final IOException ex) {
+      throw new RuntimeException(ex);
     }
   }
 
@@ -448,7 +487,7 @@ public class GraphWriter {
     //Preconditions
     assert filePath != null : "filePath must not be null";
     assert !filePath.isEmpty() : "filePath must not be empty";
-    
+
     if (System.getProperty("file.separator").equals("\\")) {
       // do not try to create a GraphViz syntax tree on Windows
       return;
@@ -466,41 +505,37 @@ public class GraphWriter {
             .append(".png; rm ")
             .append(filePath)
             .append(".dot")
-            
             .toString();
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("  shell cmd: " + cmdArray[2]);
     }
-    
-    synchronized (this) {
-      // single thread the graph generation, only one graph process at a time
-      try {
-        final Process process = Runtime.getRuntime().exec(cmdArray);
-        final StreamConsumer errorConsumer = new StreamConsumer(process.getErrorStream(), LOGGER);
-        final StreamConsumer outputConsumer = new StreamConsumer(process.getInputStream(), LOGGER);
-        errorConsumer.setName("errorConsumer");
-        errorConsumer.start();
-        outputConsumer.setName("outputConsumer");
-        outputConsumer.start();
-        int exitVal = process.waitFor();
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("  exitVal: " + exitVal);
-        } else if (exitVal != 0) {
-          LOGGER.warn("process terminated with a non-zero exit value " + exitVal);
-        }
-        
-        process.getInputStream().close();
-        process.getOutputStream().close();
-      } catch (InterruptedException ex) {
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("interrupted");
-        }
-      } catch (final IOException ex) {
-        throw new RuntimeException(ex);
+
+    try {
+      final Process process = Runtime.getRuntime().exec(cmdArray);
+      final StreamConsumer errorConsumer = new StreamConsumer(process.getErrorStream(), LOGGER);
+      final StreamConsumer outputConsumer = new StreamConsumer(process.getInputStream(), LOGGER);
+      errorConsumer.setName("errorConsumer");
+      errorConsumer.start();
+      outputConsumer.setName("outputConsumer");
+      outputConsumer.start();
+      int exitVal = process.waitFor();
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("  exitVal: " + exitVal);
+      } else if (exitVal != 0) {
+        LOGGER.warn("process terminated with a non-zero exit value " + exitVal);
       }
+
+      process.getInputStream().close();
+      process.getOutputStream().close();
+    } catch (InterruptedException ex) {
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("interrupted");
+      }
+    } catch (final IOException ex) {
+      throw new RuntimeException(ex);
     }
   }
-  
+
   private static class StreamConsumer extends Thread {
 
     // the input stream that consumes the launched process standard output or standard error stream
@@ -520,7 +555,7 @@ public class GraphWriter {
       //Preconditions
       assert inputStream != null : "inputStream must not be null";
       assert logger != null : "logger must not be null";
-      
+
       this.inputStream = inputStream;
       this.logger = logger;
     }
@@ -598,7 +633,7 @@ public class GraphWriter {
         Thread.sleep(5_000);
       } catch (InterruptedException ex2) {
       }
-      
+
     }
   }
 
@@ -619,7 +654,7 @@ public class GraphWriter {
     assert !fileName.isEmpty() : "fileName must not be empty";
     assert labeledTree != null : "labeledTree must not be null";
     assert !labeledTree.isEmpty() : "labeledTree must not be empty";
-    
+
     try {
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("  connecting to localhost graph server on port: " + GraphWriter.LISTENING_PORT);
@@ -656,7 +691,7 @@ public class GraphWriter {
     //Preconditions
     assert fileName != null : "fileName must not be null";
     assert !fileName.isEmpty() : "fileName must not be empty";
-    
+
     try {
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("  connecting to localhost graph server on port: " + GraphWriter.LISTENING_PORT);
@@ -689,5 +724,5 @@ public class GraphWriter {
     }
     issuePHPGraphRequest("quit", "quit");
   }
-  
+
 }
