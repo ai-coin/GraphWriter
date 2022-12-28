@@ -474,6 +474,7 @@ public class GraphWriter {
                 LOGGER.debug("  exitVal: " + exitVal);
             } else if (exitVal != 0) {
                 LOGGER.warn("process terminated with a non-zero exit value " + exitVal);
+                LOGGER.warn("labeledTree...\n " + labeledTree);
             }
 
             process.getInputStream().close();
