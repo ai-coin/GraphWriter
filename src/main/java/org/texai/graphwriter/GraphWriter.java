@@ -91,11 +91,12 @@ public class GraphWriter {
     assert Runtime.getRuntime().availableProcessors() >= 1 : "availableProcessors: " + Runtime.getRuntime().availableProcessors();
   }
   // the graph making thread pool using all process threads less three reserved for the application
-  ExecutorService graphMakingExecutor
-          = Executors.newFixedThreadPool(
-                  Runtime.getRuntime().availableProcessors() >= 4
-                  ? (Runtime.getRuntime().availableProcessors() - 3)
-                  : 1);
+  ExecutorService graphMakingExecutor =
+//          Executors.newFixedThreadPool(
+//                  Runtime.getRuntime().availableProcessors() >= 4
+//                  ? (Runtime.getRuntime().availableProcessors() - 3)
+//                  : 1);
+          Executors.newFixedThreadPool(28);
 
   /**
    * Constructs a new GraphWriter instance.
