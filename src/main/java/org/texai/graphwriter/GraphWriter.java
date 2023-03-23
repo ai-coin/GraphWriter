@@ -682,11 +682,11 @@ public class GraphWriter {
 
     try {
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("  connecting to localhost graph server on port: " + GraphWriter.LISTENING_PORT);
+        LOGGER.debug("    connecting to localhost graph server on port: " + GraphWriter.LISTENING_PORT);
         if (labeledTree.length() > 30) {
-          LOGGER.debug("  labeledTree: " + labeledTree.substring(0, 30) + " ...");
+          LOGGER.debug("    labeledTree: " + labeledTree.substring(0, 30) + " ...");
         } else {
-          LOGGER.debug("  labeledTree: " + labeledTree);
+          LOGGER.debug("    labeledTree: " + labeledTree);
         }
       }
       final Socket socket = new Socket("127.0.0.1", GraphWriter.LISTENING_PORT);
