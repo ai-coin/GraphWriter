@@ -40,6 +40,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -519,6 +520,7 @@ public class GraphWriter {
             .append(".dot -o ")
             .append(filePath)
             .append(".png");
+//    LOGGER.setLevel(Level.DEBUG);
 //        if (!filePath.contains("/temp/")) {
     stringBuilder
             .append("; rm ")
