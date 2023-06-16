@@ -46,9 +46,11 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
- * A singleton instance of this class listens on socket port 14446 for graph-writing requests, queues them, and serially emits graphs.
+ * A singleton instance of this class listens on socket port 14446 for
+ * graph-writing requests, queues them, and serially emits graphs.
  *
- * phpsyntaxtree supports SVG images which can contain embedded hyperlinks, as a future enhancement.
+ * phpsyntaxtree supports SVG images which can contain embedded hyperlinks, as a
+ * future enhancement.
  *
  * @author reed
  */
@@ -88,7 +90,6 @@ public class GraphWriter {
   // the GraphViz request indicator which files the labeledTree field otherwise used for a PHP syntax tree string
   private static final String GRAPHVIZ = "*GraphViz*";
 
-  // the graph making thread pool using all process threads less three reserved for the application
   final ExecutorService graphMakingExecutor;
 
   /**
@@ -147,7 +148,8 @@ public class GraphWriter {
   }
 
   /**
-   * Provides an initialized graph request factory for filling the ring buffer.
+   * Provides an initialized graph request factory for filling the ring
+   * buffer.
    */
   private static class GraphRequestFactory implements EventFactory<GraphRequest> {
 
@@ -186,11 +188,13 @@ public class GraphWriter {
     }
 
     /**
-     * Callback interface to be implemented for processing events as they become available in the RingBuffer
+     * Callback interface to be implemented for processing events as they
+     * become available in the RingBuffer
      *
      * @param graphRequest the graph request
      * @param sequence sequence of the event being processed
-     * @param endOfBatch indicates end of a batch of event entries from the ring buffer
+     * @param endOfBatch indicates end of a batch of event entries from the
+     * ring buffer
      * @throws java.lang.Exception the thrown exception
      */
     @Override
@@ -289,7 +293,8 @@ public class GraphWriter {
   }
 
   /**
-   * Provides a request server that listens on a certain port for graphing requests, and then queues them.
+   * Provides a request server that listens on a certain port for graphing
+   * requests, and then queues them.
    */
   private static class RequestServer implements Runnable {
 
@@ -403,14 +408,16 @@ public class GraphWriter {
   }
 
   /**
-   * Provides a disruptor event translator that populates a graph request slot in the ring buffer with a received graph request.
+   * Provides a disruptor event translator that populates a graph request slot
+   * in the ring buffer with a received graph request.
    */
   private static class GraphRequestEventTranslatorOneArg implements EventTranslatorOneArg<GraphRequest, GraphRequest> {
 
     /**
      * Translates a data representation into fields set in the given event
      *
-     * @param event the ring buffer graph request into which the data should be translated
+     * @param event the ring buffer graph request into which the data should
+     * be translated
      * @param sequence the event sequence number
      * @param arg0 the received graph request from the client app
      */
@@ -430,7 +437,8 @@ public class GraphWriter {
   }
 
   /**
-   * Emits a labeled tree graph for the parsing interpretation tree. Synchronized to issue only one graph at at time.
+   * Emits a labeled tree graph for the parsing interpretation tree.
+   * Synchronized to issue only one graph at at time.
    *
    * @param filePath the graph file path
    * @param labeledTree the labeled tree
@@ -479,6 +487,7 @@ public class GraphWriter {
         LOGGER.debug("  exitVal: " + exitVal);
       } else if (exitVal != 0) {
         LOGGER.warn("process terminated with a non-zero exit value " + exitVal);
+        LOGGER.warn("labeledTree...\n " + labeledTree);
       }
 
       process.getInputStream().close();
@@ -493,7 +502,8 @@ public class GraphWriter {
   }
 
   /**
-   * Emits a GraphViz diagram. Synchronized to issue only one graph at at time.
+   * Emits a GraphViz diagram. Synchronized to issue only one graph at at
+   * time.
    *
    * @param filePath the graph file path
    */
@@ -511,15 +521,21 @@ public class GraphWriter {
       "-c",
       ""
     };
-    cmdArray[2] = new StringBuilder(200)
+    final StringBuilder stringBuilder = new StringBuilder(200)
             .append("cd; dot -Tpng ")
             .append(filePath)
             .append(".dot -o ")
             .append(filePath)
-            .append(".png; rm ")
+            .append(".png");
+//    LOGGER.setLevel(Level.DEBUG);
+//        if (!filePath.contains("/temp/")) {
+    stringBuilder
+            .append("; rm ")
             .append(filePath)
-            .append(".dot")
-            .toString();
+            .append(".dot");
+//        }
+    cmdArray[2] = stringBuilder.toString();
+
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("  shell cmd: " + cmdArray[2]);
     }
@@ -605,7 +621,8 @@ public class GraphWriter {
   }
 
   /**
-   * Conveniently as a static method, called from within client code to determine whether the graph-writing server is running.
+   * Conveniently as a static method, called from within client code to
+   * determine whether the graph-writing server is running.
    *
    * @return whether the graph-writing server is running
    */
@@ -617,7 +634,8 @@ public class GraphWriter {
   }
 
   /**
-   * Conveniently as a static method, called from within client code to ensure that the graph-writing server is running.
+   * Conveniently as a static method, called from within client code to ensure
+   * that the graph-writing server is running.
    */
   public static void ensureRunningGraphServer() {
     if (isGraphServerRunning()) {
@@ -652,13 +670,15 @@ public class GraphWriter {
   }
 
   /**
-   * Conveniently as a static method, called from within client code to issue a PHP syntax tree graph request, or when checking whether the
-   * server is running.
+   * Conveniently as a static method, called from within client code to issue
+   * a PHP syntax tree graph request, or when checking whether the server is
+   * running.
    *
    * @param fileName the file name without .dot extension
    * @param labeledTree the graph writer debugging description
    *
-   * @return true if no errors occurred, or return false if the server is not running
+   * @return true if no errors occurred, or return false if the server is not
+   * running
    */
   public static boolean issuePHPGraphRequest(
           final String fileName,
@@ -671,11 +691,11 @@ public class GraphWriter {
 
     try {
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("  connecting to localhost graph server on port: " + GraphWriter.LISTENING_PORT);
+        LOGGER.debug("    connecting to localhost graph server on port: " + GraphWriter.LISTENING_PORT);
         if (labeledTree.length() > 30) {
-          LOGGER.debug("  labeledTree: " + labeledTree.substring(0, 30) + " ...");
+          LOGGER.debug("    labeledTree: " + labeledTree.substring(0, 30) + " ...");
         } else {
-          LOGGER.debug("  labeledTree: " + labeledTree);
+          LOGGER.debug("    labeledTree: " + labeledTree);
         }
       }
       final Socket socket = new Socket("127.0.0.1", GraphWriter.LISTENING_PORT);
@@ -694,8 +714,9 @@ public class GraphWriter {
   }
 
   /**
-   * Conveniently as a static method, called from within client code to issue a GraphViz diagram request, or when checking whether the
-   * server is running.
+   * Conveniently as a static method, called from within client code to issue
+   * a GraphViz diagram request, or when checking whether the server is
+   * running.
    *
    * @param fileName the file name without .dot extension
    *
