@@ -42,7 +42,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -102,12 +101,15 @@ public class GraphWriter {
     }
     
     final OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-    final int availableProcessors = osBean.getAvailableProcessors();
-    LOGGER.info("OperatingSystemMXBean availableProcessors: " + availableProcessors);
+    LOGGER.info("OperatingSystemMXBean availableProcessors: " + osBean.getAvailableProcessors());
     LOGGER.info("Runtime availableProcessors: " + Runtime.getRuntime().availableProcessors());
-    assert availableProcessors == Runtime.getRuntime().availableProcessors();
-    assert Runtime.getRuntime().availableProcessors() >= 4 : "expected at least 4 available processors, but was " + Runtime.getRuntime().availableProcessors();
-    graphMakingExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() - 3);
+    int availableProcessors = Math.max(
+            osBean.getAvailableProcessors() - 3, 
+            Runtime.getRuntime().availableProcessors());
+    
+    assert availableProcessors >= 1;
+    
+    graphMakingExecutor = Executors.newFixedThreadPool(availableProcessors);
     
     try {
       serverSocket = new ServerSocket();
@@ -144,6 +146,7 @@ public class GraphWriter {
     // start server thread
     serverThread = new Thread(new RequestServer(this));
     serverThread.setName("server");
+    LOGGER.info("starting GraphWriter server thread...");
     serverThread.start();
   }
 

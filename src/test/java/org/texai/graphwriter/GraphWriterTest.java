@@ -10,7 +10,10 @@
  */
 package org.texai.graphwriter;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.nio.file.Files;
+import java.util.Scanner;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -19,6 +22,8 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.texai.util.StringUtils;
+import org.texai.util.TexaiException;
 
 /**
  *
@@ -79,15 +84,15 @@ public class GraphWriterTest {
     LOGGER.info("----------------------------------------------------------------");
     LOGGER.info("asserting that the graph-writing server is not running...");
     assertFalse(GraphWriter.isGraphServerRunning());
-    
+
     LOGGER.info("----------------------------------------------------------------");
     LOGGER.info("ensuring that the graph-writing server running...");
     GraphWriter.ensureRunningGraphServer();
-    
+
     LOGGER.info("----------------------------------------------------------------");
     LOGGER.info("asserting that the graph-writing server is running...");
     assertTrue(GraphWriter.isGraphServerRunning());
-    
+
     LOGGER.info("----------------------------------------------------------------");
     issueGraphRequest(1);
     issueGraphRequest(2);
@@ -105,6 +110,22 @@ public class GraphWriterTest {
     } catch (InterruptedException ex) {
       // ignore
     }
+
+    final String userHomeDirectory = System.getProperty("user.home");
+    assert StringUtils.isNonEmptyString(userHomeDirectory);
+    final File file = new File(userHomeDirectory + "/GraphWriter-1.0/log/GraphWriter.log");
+    LOGGER.info("contents of: " + file.toString() + "...");
+
+    LOGGER.info("----------------------------------------------------------------");
+    try (final Scanner scanner = new Scanner(file)) {
+      while (scanner.hasNextLine()) {
+        final String line = scanner.nextLine();
+        LOGGER.info(line);
+      }
+    } catch (FileNotFoundException ex) {
+      throw new TexaiException(ex);
+    }
+    LOGGER.info("----------------------------------------------------------------");
   }
 
   private void issueGraphRequest(final int sequence) {
