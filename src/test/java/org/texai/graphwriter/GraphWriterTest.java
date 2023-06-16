@@ -10,6 +10,7 @@
  */
 package org.texai.graphwriter;
 
+import java.nio.file.Files;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -50,6 +51,13 @@ public class GraphWriterTest {
 
   @AfterClass
   public static void tearDownClass() throws Exception {
+    GraphWriter.shutDown();
+    try {
+      Thread.sleep(2_000); // 2 seconds
+    } catch (InterruptedException ex) {
+      // ignore
+    }
+    assertFalse(GraphWriter.isGraphServerRunning());
   }
 
   @Before
@@ -66,12 +74,21 @@ public class GraphWriterTest {
   @Test
   public void testGraphLabeledTree2() {
     LOGGER.info("graphLabeledTree2");
+
     Logger.getLogger(GraphWriter.class).setLevel(Level.DEBUG);
+    LOGGER.info("----------------------------------------------------------------");
     LOGGER.info("asserting that the graph-writing server is not running...");
     assertFalse(GraphWriter.isGraphServerRunning());
+    
+    LOGGER.info("----------------------------------------------------------------");
+    LOGGER.info("ensuring that the graph-writing server running...");
     GraphWriter.ensureRunningGraphServer();
+    
+    LOGGER.info("----------------------------------------------------------------");
     LOGGER.info("asserting that the graph-writing server is running...");
     assertTrue(GraphWriter.isGraphServerRunning());
+    
+    LOGGER.info("----------------------------------------------------------------");
     issueGraphRequest(1);
     issueGraphRequest(2);
     issueGraphRequest(3);
@@ -88,13 +105,6 @@ public class GraphWriterTest {
     } catch (InterruptedException ex) {
       // ignore
     }
-    GraphWriter.shutDown();
-    try {
-      Thread.sleep(2_000); // 2 seconds
-    } catch (InterruptedException ex) {
-      // ignore
-    }
-    assertFalse(GraphWriter.isGraphServerRunning());
   }
 
   private void issueGraphRequest(final int sequence) {

@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -40,6 +42,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -52,7 +55,7 @@ import org.apache.log4j.Logger;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class GraphWriter {
 
-  // the logger, which is configured via log4j.properties to log to the file GraphWriter.log
+  // the logger
   private static final Logger LOGGER = Logger.getLogger(GraphWriter.class);
 
   // the path to the graph writing server
@@ -85,16 +88,26 @@ public class GraphWriter {
   // the GraphViz request indicator which files the labeledTree field otherwise used for a PHP syntax tree string
   private static final String GRAPHVIZ = "*GraphViz*";
 
-  static {
-    assert Runtime.getRuntime().availableProcessors() >= 4;
-  }
   // the graph making thread pool using all process threads less three reserved for the application
-  ExecutorService graphMakingExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() - 3);
+  final ExecutorService graphMakingExecutor;
 
   /**
    * Constructs a new GraphWriter instance.
    */
   public GraphWriter() {
+    //LOGGER.setLevel(Level.DEBUG);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.info("debug is enabled");
+    }
+    
+    final OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+    final int availableProcessors = osBean.getAvailableProcessors();
+    LOGGER.info("OperatingSystemMXBean availableProcessors: " + availableProcessors);
+    LOGGER.info("Runtime availableProcessors: " + Runtime.getRuntime().availableProcessors());
+    assert availableProcessors == Runtime.getRuntime().availableProcessors();
+    assert Runtime.getRuntime().availableProcessors() >= 4 : "expected at least 4 available processors, but was " + Runtime.getRuntime().availableProcessors();
+    graphMakingExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() - 3);
+    
     try {
       serverSocket = new ServerSocket();
     } catch (IOException ex) {
@@ -320,6 +333,7 @@ public class GraphWriter {
           if (graphWriter.isQuit.get()) {
             return;
           }
+          LOGGER.info("  accepted request...");
           final RequestHandler requestHandler = new RequestHandler(graphWriter, clientSocket);
           graphWriter.graphingRequestExecutor.execute(requestHandler);
         }
@@ -628,9 +642,9 @@ public class GraphWriter {
       } catch (IOException ex1) {
         throw new RuntimeException(ex1);
       }
-      LOGGER.info("waiting 5 seconds for the graph server to start...");
+      LOGGER.info("waiting 10 seconds for the graph server to start...");
       try {
-        Thread.sleep(5_000);
+        Thread.sleep(10_000);
       } catch (InterruptedException ex2) {
       }
 
